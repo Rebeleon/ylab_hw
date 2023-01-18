@@ -1,0 +1,8 @@
+__pycache__
+venv/
+migrate/
+migration/
+*.ini
+*.http
+*.xml
+.idea
