@@ -1,6 +1,6 @@
-from typing import List
 import uuid
 from pydantic import BaseModel
+from decimal import Decimal
 
 
 class MenuBaseSchema(BaseModel):
@@ -25,18 +25,6 @@ class UpdateMenuSchema(BaseModel):
 
     class Config:
         orm_mode = True
-
-
-class MenuResponse4List(BaseModel):
-    id: uuid.UUID
-    title: str
-    description: str
-    submenus_count: int
-    dishes_count: int
-
-
-class ListMenuResponse(BaseModel):
-    menus: List[MenuResponse4List]
 
 
 class FilteredMenuResponse(MenuBaseSchema):
@@ -69,17 +57,6 @@ class UpdateSubmenuSchema(BaseModel):
         orm_mode = True
 
 
-class SubmenuResponse4List(BaseModel):
-    id: uuid.UUID
-    title: str
-    description: str
-    dishes_count: int
-
-
-class ListSubmenuResponse(BaseModel):
-    submenus: List[SubmenuResponse4List]
-
-
 class FilteredSubmenuResponse(SubmenuBaseSchema):
     id: uuid.UUID
 
@@ -87,7 +64,7 @@ class FilteredSubmenuResponse(SubmenuBaseSchema):
 class DishBaseSchema(BaseModel):
     title: str
     description: str
-    price: float
+    price: Decimal
     submenu_id: uuid.UUID | None = None
 
     class Config:
@@ -100,24 +77,8 @@ class CreateDishSchema(DishBaseSchema):
 
 class DishResponse(DishBaseSchema):
     id: uuid.UUID
+    price: str
 
 
-class UpdateDishSchema(BaseModel):
-    title: str
-    description: str
-    price: float
-    submenu_id: uuid.UUID | None = None
-
-    class Config:
-        orm_mode = True
-
-
-class DishResponse4List(BaseModel):
-    id: uuid.UUID
-    title: str
-    description: str
-    price: float
-
-
-class ListDishResponse(BaseModel):
-    dishes: List[DishResponse4List]
+class UpdateDishSchema(DishBaseSchema):
+    pass

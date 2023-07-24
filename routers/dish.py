@@ -3,6 +3,9 @@ import schemas
 import models
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException, status, APIRouter, Response
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
+from decimal import Decimal
 from database import get_db
 
 
@@ -10,15 +13,14 @@ router = APIRouter()
 
 
 # Get dishes
-@router.get('/{target_menu_id}/submenus/{target_submenu_id}/dishes', response_model=schemas.ListDishResponse)
-def get_submenus(db: Session = Depends(get_db)):
+@router.get('/{target_menu_id}/submenus/{target_submenu_id}/dishes')
+def get_dishes(db: Session = Depends(get_db)):
     dishes = db.query(models.Dish).group_by(models.Dish.id).all()
     dishes_response = []
     for dish in dishes:
         dishes_response.append({'id': dish.id, 'title': dish.title, 'description': dish.description,
-                                 'price': dish.price})
-    return {'dishes': dishes_response}
-    # return dishes
+                                'price': dish.price})
+    return JSONResponse(content=jsonable_encoder(dishes_response))
 
 
 # Get a single dish
@@ -27,17 +29,21 @@ def get_dish(target_dish_id: str, db: Session = Depends(get_db)):
     dish = db.query(models.Dish).filter(models.Dish.id == target_dish_id).first()
     if not dish:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"No dish with this id: {target_dish_id} found")
+                            detail='dish not found')
     return dish
 
 
 @router.post('/{target_menu_id}/submenus/{target_submenu_id}/dishes', status_code=status.HTTP_201_CREATED, response_model=schemas.DishResponse)
 def create_dish(target_submenu_id: str, dish: schemas.CreateDishSchema, db: Session = Depends(get_db)):
     dish.submenu_id = uuid.UUID(target_submenu_id)
+    dec_price = dish.price.quantize(Decimal('.01'))
+    dish.price = dec_price
     new_dish = models.Dish(**dish.dict())
+    print(new_dish.price)
     db.add(new_dish)
     db.commit()
     db.refresh(new_dish)
+    print(new_dish.price)
     return new_dish
 
 
