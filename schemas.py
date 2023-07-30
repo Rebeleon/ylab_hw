@@ -64,7 +64,7 @@ class FilteredSubmenuResponse(SubmenuBaseSchema):
 class DishBaseSchema(BaseModel):
     title: str
     description: str
-    price: Decimal
+    price: str
     submenu_id: uuid.UUID | None = None
 
     class Config:
@@ -72,12 +72,11 @@ class DishBaseSchema(BaseModel):
 
 
 class CreateDishSchema(DishBaseSchema):
-    pass
+    price: Decimal
 
 
 class DishResponse(DishBaseSchema):
     id: uuid.UUID
-    price: str
 
 
 class UpdateDishSchema(DishBaseSchema):

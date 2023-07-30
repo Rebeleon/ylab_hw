@@ -36,14 +36,10 @@ def get_dish(target_dish_id: str, db: Session = Depends(get_db)):
 @router.post('/{target_menu_id}/submenus/{target_submenu_id}/dishes', status_code=status.HTTP_201_CREATED, response_model=schemas.DishResponse)
 def create_dish(target_submenu_id: str, dish: schemas.CreateDishSchema, db: Session = Depends(get_db)):
     dish.submenu_id = uuid.UUID(target_submenu_id)
-    dec_price = dish.price.quantize(Decimal('.01'))
-    dish.price = dec_price
     new_dish = models.Dish(**dish.dict())
-    print(new_dish.price)
     db.add(new_dish)
     db.commit()
     db.refresh(new_dish)
-    print(new_dish.price)
     return new_dish
 
 

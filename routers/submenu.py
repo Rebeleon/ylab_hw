@@ -20,7 +20,6 @@ def get_submenus(db: Session = Depends(get_db)):
         dishes = db.query(models.Dish).filter(models.Dish.submenu_id == submenu.id).all()
         submenu_response.append({'id': submenu.id, 'title': submenu.title, 'description': submenu.description,
                                  'dishes_count': len(dishes)})
-    print(submenu_response)
     return JSONResponse(content=jsonable_encoder(submenu_response))
 
 
