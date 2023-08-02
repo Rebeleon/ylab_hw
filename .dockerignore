@@ -1,7 +1,6 @@
 .git
 .idea/
 venv/
-env/
-.pytest_cache/
+../.pytest_cache/
 **/__pycache__
 **/*.pyc
