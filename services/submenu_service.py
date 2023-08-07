@@ -32,7 +32,7 @@ class SubmenuService:
         submenu_response = []
         for submenu in submenus:
             dishes = self.db.query(models.Dish).filter(models.Dish.submenu_id == submenu.id).all()
-            submenu_response.append({'id': submenu.id, 'title': submenu.title, 'description': submenu.description,
+            submenu_response.append({'id': str(submenu.id), 'title': submenu.title, 'description': submenu.description,
                                      'dishes_count': len(dishes)})
         for submenu in submenu_response:
             subkey = f"menu:{submenu['id']}"
@@ -50,7 +50,7 @@ class SubmenuService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                                 detail='submenu not found')
         dishes = self.db.query(models.Dish).filter(models.Dish.submenu_id == submenu.id).all()
-        submenu_response = {'id': submenu.id, 'title': submenu.title, 'description': submenu.description,
+        submenu_response = {'id': str(submenu.id), 'title': submenu.title, 'description': submenu.description,
                             'dishes_count': len(dishes)}
         r.hset(f'get/submenus/{target_submenu_id}', mapping=submenu_response)
         r.expire(f'get/submenus/{target_submenu_id}', time=10)
@@ -62,6 +62,7 @@ class SubmenuService:
         self.db.add(new_submenu)
         self.db.commit()
         self.db.refresh(new_submenu)
+        r.delete('submenus')
         return new_submenu
 
     def update(self, target_submenu_id: str, submenu: schemas.UpdateSubmenuSchema):
@@ -73,6 +74,7 @@ class SubmenuService:
                                 detail=f'No submenu with this id: {target_submenu_id} found')
         submenu_query.update(submenu.dict(exclude_unset=True), synchronize_session=False)
         self.db.commit()
+        r.delete('submenus', f'get/submenus/{target_submenu_id}')
         return updated_submenu
 
     def delete(self, target_submenu_id: str):
@@ -81,7 +83,9 @@ class SubmenuService:
         if not submenu:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                                 detail=f'No submenu with this id: {target_submenu_id} found')
+        menu_id = submenu.menu_id
         submenu_query.delete(synchronize_session=False)
         self.db.commit()
+        r.delete('submenus', f'get/submenus/{target_submenu_id}', f'get/menus/{str(menu_id)}')
         return submenu
 

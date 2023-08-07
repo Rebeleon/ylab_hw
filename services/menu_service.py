@@ -73,6 +73,7 @@ class MenuService:
         self.db.add(new_menu)
         self.db.commit()
         self.db.refresh(new_menu)
+        r.delete('menus')
         return new_menu
 
     def update(self, target_menu_id: str, menu: schemas.UpdateMenuSchema):
@@ -83,6 +84,7 @@ class MenuService:
                                 detail=f'No menu with this id: {target_menu_id} found')
         menu_query.update(menu.dict(exclude_unset=True), synchronize_session=False)
         self.db.commit()
+        r.delete('menus', f'get/menus/{target_menu_id}')
         return updated_menu
 
     def delete(self, target_menu_id: str):
@@ -93,6 +95,5 @@ class MenuService:
                                 detail=f'No menu with this id: {target_menu_id} found')
         menu_query.delete(synchronize_session=False)
         self.db.commit()
+        r.delete('menus', f'get/menus/{target_menu_id}')
         return menu
-
-

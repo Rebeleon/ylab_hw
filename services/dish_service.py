@@ -57,6 +57,7 @@ class DishService:
         self.db.add(new_dish)
         self.db.commit()
         self.db.refresh(new_dish)
+        r.delete('dishes')
         return new_dish
 
     def update(self, target_dish_id: str, dish: schemas.UpdateDishSchema):
@@ -68,6 +69,7 @@ class DishService:
                                 detail=f'No submenu with this id: {target_dish_id} found')
         dish_query.update(dish.dict(exclude_unset=True), synchronize_session=False)
         self.db.commit()
+        r.delete('dishes', f'get/dishes/{target_dish_id}')
         return updated_dish
 
     def delete(self, target_dish_id: str):
@@ -78,4 +80,5 @@ class DishService:
                                 detail=f'No dish with this id: {target_dish_id} found')
         dish_query.delete(synchronize_session=False)
         self.db.commit()
+        r.delete('dishes', f'get/dishes/{target_dish_id}')
         return dish
