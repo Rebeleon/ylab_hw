@@ -3,6 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from routers import menu, submenu, dish
 
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
+
+# from redis import asyncio as aioredis
+# import redis
+
+
 app = FastAPI()
 
 origins = [
@@ -23,6 +30,13 @@ app.include_router(submenu.router, tags=['Submenus'], prefix='/api/v1/menus')
 app.include_router(dish.router, tags=['Dishes'], prefix='/api/v1/menus')
 
 
+# @app.on_event("startup")
+# async def startup():
+    # redis = aioredis.from_url("redis://localhost", encoding="utf8", decode_responses=True)
+    # FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache", key_builder=request_key_builder)
+
+
 @app.get('/api/healthchecker')
 def root():
-    return {'message': 'Hello World'}
+    message = [{'message': 'Hello World'}]
+    return JSONResponse(content=jsonable_encoder(message))

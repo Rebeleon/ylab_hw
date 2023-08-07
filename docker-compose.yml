@@ -12,7 +12,7 @@ services:
       POSTGRES_DB: "$POSTGRES_DB"
       POSTGRES_HOST: "$POSTGRES_HOST"
       POSTGRES_HOSTNAME: "$POSTGRES_HOSTNAME"
-    entrypoint: sh -c "alembic upgrade head && python -m pytest [...]"
+    entrypoint: sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 -port 8000"
     volumes:
       - shared-volume:/api/generated_files
     networks:
