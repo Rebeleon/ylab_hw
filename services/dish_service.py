@@ -1,12 +1,9 @@
 import json
-import uuid
-from sqlalchemy.orm import Session
-from fastapi import Depends, HTTPException, status, APIRouter, Response
+from fastapi import Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from database import get_db
-import models
 import schemas
+from repository.dish_repository import DishRepository
 
 import redis
 
@@ -14,9 +11,8 @@ r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 
 class DishService:
-    def __init__(self, db: Session = Depends(get_db)):
-        self.db = db
-        self.model = models.Dish
+    def __init__(self, db_repository: DishRepository = Depends()):
+        self.db_repository = db_repository
 
     def get_all(self):
         key = 'dishes'
@@ -27,11 +23,9 @@ class DishService:
                 dish = json.loads(dish)
                 dishes_list.append(dish)
             return JSONResponse(content=jsonable_encoder(dishes_list))
-        dishes = self.db.query(models.Dish).group_by(models.Dish.id).all()
-        dishes_response = []
-        for dish in dishes:
-            dishes_response.append({'id': str(dish.id), 'title': dish.title, 'description': dish.description,
-                                    'price': str(dish.price)})
+
+        dishes_response = self.db_repository.get_all()
+
         for dish in dishes_response:
             subkey = f"dish:{dish['id']}"
             r.hset(key, subkey, json.dumps(dish))
@@ -42,43 +36,27 @@ class DishService:
         data = r.hgetall(f'get/dishes/{target_dish_id}')
         if data:
             return JSONResponse(content=jsonable_encoder(data))
-        dish = self.db.query(models.Dish).filter(models.Dish.id == target_dish_id).first()
-        if not dish:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                detail='dish not found')
+
+        dish = self.db_repository.get_by_id(target_dish_id)
+
         dish_dict = {'id': str(dish.id), 'title': dish.title, 'description': dish.description, 'price': str(dish.price)}
         r.hset(f'get/dishes/{target_dish_id}', mapping=dish_dict)
         r.expire(f'get/dishes/{target_dish_id}', time=10)
         return dish
 
     def create(self, target_submenu_id: str, dish: schemas.CreateDishSchema):
-        dish.submenu_id = uuid.UUID(target_submenu_id)
-        new_dish = models.Dish(**dish.dict())
-        self.db.add(new_dish)
-        self.db.commit()
-        self.db.refresh(new_dish)
-        r.delete('dishes')
-        return new_dish
+        data = self.db_repository.create(target_submenu_id, dish)
+        r.delete('dishes', 'submenus', 'menus', f'get/submenus/{target_submenu_id}',
+                 f"get/menus/{str(data['menu_id'])}")
+        return data['dish']
 
     def update(self, target_dish_id: str, dish: schemas.UpdateDishSchema):
-        dish_query = self.db.query(models.Dish).filter(models.Dish.id == target_dish_id)
-        updated_dish = dish_query.first()
-
-        if not updated_dish:
-            raise HTTPException(status_code=status.HTTP_200_OK,
-                                detail=f'No submenu with this id: {target_dish_id} found')
-        dish_query.update(dish.dict(exclude_unset=True), synchronize_session=False)
-        self.db.commit()
+        updated_dish = self.db_repository.update(target_dish_id, dish)
         r.delete('dishes', f'get/dishes/{target_dish_id}')
         return updated_dish
 
     def delete(self, target_dish_id: str):
-        dish_query = self.db.query(models.Dish).filter(models.Dish.id == target_dish_id)
-        dish = dish_query.first()
-        if not dish:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                detail=f'No dish with this id: {target_dish_id} found')
-        dish_query.delete(synchronize_session=False)
-        self.db.commit()
-        r.delete('dishes', f'get/dishes/{target_dish_id}')
-        return dish
+        data = self.db_repository.delete(target_dish_id)
+        r.delete('dishes', f'get/dishes/{target_dish_id}', 'submenus', 'menus',
+                 f"get/submenus/{str(data['menu_id'])}", f"get/menus/{str(data['menu_id'])}")
+        return data['dish']

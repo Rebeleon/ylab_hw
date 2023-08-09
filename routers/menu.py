@@ -1,5 +1,5 @@
 import schemas
-from fastapi import Depends, HTTPException, status, APIRouter
+from fastapi import Depends, status, APIRouter
 from services.menu_service import MenuService
 
 # import redis
