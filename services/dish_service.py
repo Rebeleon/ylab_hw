@@ -1,11 +1,12 @@
 import json
+
+import redis
 from fastapi import Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+
 import schemas
 from repository.dish_repository import DishRepository
-
-import redis
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 

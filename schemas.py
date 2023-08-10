@@ -1,6 +1,8 @@
 import uuid
+
 from pydantic import BaseModel
-from decimal import Decimal
+
+# from decimal import Decimal
 
 
 class MenuBaseSchema(BaseModel):
@@ -72,7 +74,8 @@ class DishBaseSchema(BaseModel):
 
 
 class CreateDishSchema(DishBaseSchema):
-    price: Decimal
+    # price: Decimal
+    pass
 
 
 class DishResponse(DishBaseSchema):

@@ -1,7 +1,7 @@
-import schemas
-from fastapi import Depends, HTTPException, status, APIRouter
-from services.submenu_service import SubmenuService
+from fastapi import APIRouter, Depends, status
 
+import schemas
+from services.submenu_service import SubmenuService
 
 router = APIRouter()
 

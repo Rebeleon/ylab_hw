@@ -1,11 +1,12 @@
 import json
+
+import redis
 from fastapi import Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+
 import schemas
 from repository.menu_repository import MenuRepository
-
-import redis
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
@@ -15,7 +16,7 @@ class MenuService:
         self.db_repository = db_repository
 
     def get_all(self):
-        data = r.hgetall(f'menus')
+        data = r.hgetall('menus')
         if data:
             menus_list = []
             for subkey, menu in data.items():

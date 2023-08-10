@@ -1,11 +1,12 @@
 import json
+
+import redis
 from fastapi import Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+
 import schemas
 from repository.submenu_repository import SubmenuRepository
-
-import redis
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
@@ -57,4 +58,3 @@ class SubmenuService:
         submenu = self.db_repository.delete(target_submenu_id)
         r.delete('submenus', f'get/submenus/{target_submenu_id}', f"get/menus/{str(submenu['menu_id'])}")
         return submenu['submenu']
-
