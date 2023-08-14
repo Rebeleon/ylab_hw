@@ -1,26 +1,42 @@
 from fastapi import Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import models
 import schemas
 from database import get_db
 
+# from sqlalchemy.orm import Session
+
 
 class MenuRepository:
-    def __init__(self, db: Session = Depends(get_db)):
+    def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
         self.model = models.Menu
 
-    def get_all(self):
-        menus = self.db.query(models.Menu).all()
+    # def get_all(self):
+    #     menus = self.db.query(models.Menu).all()
+    #     menu_response = []
+    #     for menu in menus:
+    #         submenus = self.db.query(models.Submenu).filter(models.Submenu.menu_id == menu.id).all()
+    #         dishes_count = 0
+    #         for submenu in submenus:
+    #             dishes_count += len(self.db.query(models.Dish).filter(models.Dish.submenu_id == submenu.id).all())
+    #         menu_response.append({'id': str(menu.id), 'title': menu.title, 'description': menu.description,
+    #                               'submenus_count': len(submenus), 'dishes_count': dishes_count})
+    #     return menu_response
+
+    async def get_all(self):
+        menus = await self.db.execute(select(models.Menu))
         menu_response = []
-        for menu in menus:
-            submenus = self.db.query(models.Submenu).filter(models.Submenu.menu_id == menu.id).all()
+        for menu in menus.scalars():
+            submenus = await self.db.execute(select(models.Submenu).where(models.Submenu.menu_id == menu.id))
             dishes_count = 0
-            for submenu in submenus:
-                dishes_count += len(self.db.query(models.Dish).filter(models.Dish.submenu_id == submenu.id).all())
+            for submenu in submenus.scalars():
+                dishes_count = await self.db.execute(
+                    select(func.count(models.Dish.id)).where(models.Dish.submenu_id == submenu.id))
             menu_response.append({'id': str(menu.id), 'title': menu.title, 'description': menu.description,
-                                  'submenus_count': len(submenus), 'dishes_count': dishes_count})
+                                  'submenus_count': len(submenus.all()), 'dishes_count': dishes_count.scalar()})
         return menu_response
 
     def get_by_id(self, target_menu_id: str):
